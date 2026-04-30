@@ -1,6 +1,6 @@
 # TabAudio Forge
 
-Landing page: [https://&lt;user&gt;.github.io/tabaudio-forge/](https://fgbm.github.io/tabaudio-forge/)
+Landing page: [https://fgbm.github.io/tabaudio-forge/](https://fgbm.github.io/tabaudio-forge/)
 
 TabAudio Forge is a minimal Manifest V3 extension for Chrome and Edge that records audio from the active browser tab and saves it locally as a WebM file.
 
@@ -23,6 +23,18 @@ The MVP uses `chrome.tabCapture.getMediaStreamId()`, an offscreen document, and 
 3. Click Load unpacked.
 4. Select this repository folder.
 5. Open a tab with audio, click the TabAudio Forge action, and press Start.
+
+## Packaging and Releases
+
+Validate and package the extension with:
+
+```sh
+npm run validate
+npm run package
+```
+
+Release automation, GitHub Pages deployment, and Chrome Web Store publication are described in
+[`RELEASE.md`](RELEASE.md).
 
 ## Output Files
 
