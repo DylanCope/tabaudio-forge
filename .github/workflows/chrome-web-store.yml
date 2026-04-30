@@ -1,0 +1,94 @@
+name: Chrome Web Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Submit the uploaded package for publishing"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    name: Upload package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate extension package inputs
+        run: npm run validate
+
+      - name: Package extension
+        run: npm run package
+
+      - name: Upload package to Chrome Web Store
+        env:
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          set -euo pipefail
+
+          for name in CHROME_CLIENT_ID CHROME_CLIENT_SECRET CHROME_REFRESH_TOKEN CHROME_PUBLISHER_ID CHROME_EXTENSION_ID; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required secret: ${name}"
+              exit 1
+            fi
+          done
+
+          ZIP_PATH="$(ls dist/*.zip | head -n 1)"
+          ACCESS_TOKEN="$(
+            curl -fsS -X POST "https://oauth2.googleapis.com/token" \
+              -d "client_id=${CHROME_CLIENT_ID}" \
+              -d "client_secret=${CHROME_CLIENT_SECRET}" \
+              -d "refresh_token=${CHROME_REFRESH_TOKEN}" \
+              -d "grant_type=refresh_token" \
+            | node -e "let data=''; process.stdin.on('data', chunk => data += chunk); process.stdin.on('end', () => { const json = JSON.parse(data); if (!json.access_token) { console.error(data); process.exit(1); } process.stdout.write(json.access_token); });"
+          )"
+
+          ITEM_NAME="publishers/${CHROME_PUBLISHER_ID}/items/${CHROME_EXTENSION_ID}"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@${ZIP_PATH}" \
+            "https://chromewebstore.googleapis.com/upload/v2/${ITEM_NAME}:upload"
+
+      - name: Submit package for publishing
+        if: ${{ inputs.publish }}
+        env:
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          CHROME_PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+        run: |
+          set -euo pipefail
+
+          ACCESS_TOKEN="$(
+            curl -fsS -X POST "https://oauth2.googleapis.com/token" \
+              -d "client_id=${CHROME_CLIENT_ID}" \
+              -d "client_secret=${CHROME_CLIENT_SECRET}" \
+              -d "refresh_token=${CHROME_REFRESH_TOKEN}" \
+              -d "grant_type=refresh_token" \
+            | node -e "let data=''; process.stdin.on('data', chunk => data += chunk); process.stdin.on('end', () => { const json = JSON.parse(data); if (!json.access_token) { console.error(data); process.exit(1); } process.stdout.write(json.access_token); });"
+          )"
+
+          ITEM_NAME="publishers/${CHROME_PUBLISHER_ID}/items/${CHROME_EXTENSION_ID}"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{}" \
+            "https://chromewebstore.googleapis.com/v2/${ITEM_NAME}:publish"

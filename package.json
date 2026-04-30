@@ -1,0 +1,10 @@
+{
+  "name": "tabaudio-forge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/package-extension.mjs --check",
+    "package": "node scripts/package-extension.mjs"
+  }
+}
