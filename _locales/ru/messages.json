@@ -1,0 +1,122 @@
+{
+  "extensionName": {
+    "message": "TabAudio Forge"
+  },
+  "extensionDescription": {
+    "message": "Записывает аудио активной вкладки и сохраняет его локально."
+  },
+  "subtitle": {
+    "message": "Запись аудио текущей вкладки"
+  },
+  "labelStatus": {
+    "message": "Статус"
+  },
+  "labelDuration": {
+    "message": "Длительность"
+  },
+  "labelFormat": {
+    "message": "Формат"
+  },
+  "labelSize": {
+    "message": "Размер"
+  },
+  "controlsLabel": {
+    "message": "Управление записью"
+  },
+  "buttonStart": {
+    "message": "Старт"
+  },
+  "buttonPause": {
+    "message": "Пауза"
+  },
+  "buttonResume": {
+    "message": "Продолжить"
+  },
+  "buttonStop": {
+    "message": "Стоп"
+  },
+  "statusIdle": {
+    "message": "Ожидание"
+  },
+  "statusPreparing": {
+    "message": "Захват вкладки..."
+  },
+  "statusRecording": {
+    "message": "Запись $DURATION$",
+    "placeholders": {
+      "duration": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusPaused": {
+    "message": "Пауза"
+  },
+  "statusSaving": {
+    "message": "Сохранение..."
+  },
+  "statusCompleted": {
+    "message": "Готово"
+  },
+  "statusError": {
+    "message": "Ошибка"
+  },
+  "formatOpusWebm": {
+    "message": "Opus (webm)"
+  },
+  "formatWebm": {
+    "message": "WebM"
+  },
+  "errorCommandFailed": {
+    "message": "Команда не выполнена."
+  },
+  "errorUnknown": {
+    "message": "Неизвестная ошибка."
+  },
+  "errorRecordingAlreadyRunning": {
+    "message": "Запись уже идёт."
+  },
+  "errorNoActiveTab": {
+    "message": "Активная вкладка не найдена."
+  },
+  "errorRestrictedPage": {
+    "message": "Эту страницу браузера нельзя записать."
+  },
+  "errorDownloadInterrupted": {
+    "message": "Скачивание было прервано."
+  },
+  "errorRecordingStateLost": {
+    "message": "Состояние записи было потеряно после перезапуска фонового обработчика."
+  },
+  "errorRecordingFailed": {
+    "message": "Запись не удалась."
+  },
+  "errorRecordingNoFile": {
+    "message": "Запись завершилась без файла для скачивания."
+  },
+  "errorUnsupportedMime": {
+    "message": "MediaRecorder в этом браузере не поддерживает запись audio/webm."
+  },
+  "errorOffscreenUnexpected": {
+    "message": "Неожиданная ошибка offscreen-документа."
+  },
+  "errorMediaRecorderFailed": {
+    "message": "Ошибка MediaRecorder."
+  },
+  "errorUnknownMessageType": {
+    "message": "Неизвестный тип сообщения: $TYPE$",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  },
+  "errorUnknownOffscreenMessageType": {
+    "message": "Неизвестный тип offscreen-сообщения: $TYPE$",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  }
+}
