@@ -175,7 +175,8 @@ async function startRecording() {
 }
 
 async function forwardControl(type) {
-  if (FINAL_STATES.has(status.state)) {
+  if (FINAL_STATES.has(status.state) &&
+      !(type === "OFFSCREEN_STOP" && await hasOffscreenDocument())) {
     return getCurrentStatus();
   }
 

@@ -112,8 +112,8 @@ function getControlVisibility(state) {
     },
     stop: {
       element: elements.stopButton,
-      visible: ["recording", "paused", "preparing"].includes(state),
-      disabled: !["recording", "paused"].includes(state),
+      visible: ["recording", "paused", "preparing", "error"].includes(state),
+      disabled: !["recording", "paused", "error"].includes(state),
     },
   };
 }

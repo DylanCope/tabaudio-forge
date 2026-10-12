@@ -19,6 +19,7 @@ let pausedDurationMs = 0;
 let progressTimer = null;
 let currentObjectUrl = "";
 let dbPromise = null;
+let recordingFailed = false;
 
 let status = {
   state: "idle",
@@ -41,10 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     .then((response) => sendResponse({ ok: true, ...response }))
     .catch((error) => {
       const errorMessage = getErrorMessage(error);
-      setStatus({ state: "error", error: errorMessage });
-      stopProgressTimer();
-      stopTracks();
-      sendToWorker("RECORDING_ERROR", { error: errorMessage, status }).catch(() => {});
+      failRecording(error);
       sendResponse({ ok: false, error: errorMessage, status });
     });
 
@@ -53,8 +51,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 addEventListener("error", (event) => {
   const message = event.error?.message || event.message || t("errorOffscreenUnexpected");
-  setStatus({ state: "error", error: message });
-  sendToWorker("RECORDING_ERROR", { error: message, status }).catch(() => {});
+  failRecording(message);
 });
 
 async function handleMessage(message) {
@@ -111,8 +108,7 @@ async function startRecording({ streamId, filename }) {
   recorder.ondataavailable = handleDataAvailable;
   recorder.onerror = (event) => {
     const message = event.error?.message || t("errorMediaRecorderFailed");
-    setStatus({ state: "error", error: message });
-    sendToWorker("RECORDING_ERROR", { error: message, status }).catch(() => {});
+    failRecording(message);
   };
   recorder.onstop = finalizeRecording;
 
@@ -167,17 +163,34 @@ function stopRecording() {
   return status;
 }
 
+// Terminal errors must release capture even if persistence or finalization failed.
+function failRecording(error) {
+  if (recordingFailed) return;
+  recordingFailed = true;
+  stopProgressTimer();
+  if (recorder) {
+    recorder.ondataavailable = null;
+    recorder.onstop = null;
+    recorder.onerror = null;
+    try {
+      if (recorder.state !== "inactive") recorder.stop();
+    } catch {
+      // Stopping the stream below remains mandatory if MediaRecorder.stop throws.
+    }
+  }
+  stopTracks();
+  setStatus({ state: "error", error: getErrorMessage(error) });
+  sendToWorker("RECORDING_ERROR", { error: status.error, status }).catch(() => {});
+}
+
 function handleDataAvailable(event) {
-  if (!event.data || event.data.size === 0) {
+  if (recordingFailed || !event.data || event.data.size === 0) {
     return;
   }
 
   chunkWriteQueue = chunkWriteQueue
-    .then(() => storeDataChunk(event.data))
-    .catch((error) => {
-      setStatus({ state: "error", error: getErrorMessage(error) });
-      sendToWorker("RECORDING_ERROR", { error: status.error, status }).catch(() => {});
-    });
+    .then(() => recordingFailed ? undefined : storeDataChunk(event.data))
+    .catch(failRecording);
 }
 
 async function finalizeRecording() {
@@ -186,13 +199,13 @@ async function finalizeRecording() {
 
   try {
     await chunkWriteQueue;
+    if (recordingFailed) return;
     const result = await createRecordingResult(recordingId);
     await sendToWorker("RECORDING_COMPLETE", result);
     await deleteRecordingData(recordingId);
     recordingId = "";
   } catch (error) {
-    setStatus({ state: "error", error: getErrorMessage(error) });
-    sendToWorker("RECORDING_ERROR", { error: status.error, status }).catch(() => {});
+    failRecording(error);
   }
 }
 
@@ -272,6 +285,7 @@ function chooseMimeType() {
 }
 
 async function resetRecordingState({ mimeType, filename }) {
+  recordingFailed = false;
   revokeObjectUrl(currentObjectUrl);
   recorder = null;
   mediaStream = null;
